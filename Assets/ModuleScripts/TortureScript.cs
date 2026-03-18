@@ -95,7 +95,6 @@ public class TortureScript : ModuleScript
     {
         IsAprilFools = DateTime.Now.Day == 1 && DateTime.Now.Month == 4;
 
-        _moduleRender.color = new Color32(255, 255, 255, 255);
         if (!IsSeedSet)
         {
             _seed = Rnd.Range(int.MinValue, int.MaxValue);
@@ -162,6 +161,11 @@ public class TortureScript : ModuleScript
         MissionDescription();
 
         GenerateGrid(Rand.Next(0, Modulus));
+    }
+
+    private new void OnDestroy()
+    {
+        _moduleRender.color = new Color32(255, 255, 255, 255);
     }
 
     private void MissionDescription()
@@ -308,7 +312,7 @@ public class TortureScript : ModuleScript
 
         IsLogging = true;
         _moduleRender.color = new Color32(192, 0, 0, 255);
-        Enumerable.Range(0, GridSize).Where(x => (((x % Width) ^ (x / Width)) & 1) == 1).ForEach(x => _grid[x].SetTileColour(x, 3));
+        Enumerable.Range(0, GridSize).Where(x => IsChecker(x)).ForEach(x => _grid[x].SetTileColour(x, 3));
         GenerateLogging(true);
     }
 
@@ -332,6 +336,11 @@ public class TortureScript : ModuleScript
             IsNotEnoughTime = true;
 
         StartCoroutine(SolveAnimation());
+    }
+
+    internal bool IsChecker(int i)
+    {
+        return (((i % Width) ^ (i / Width)) & 1) == 1;
     }
 
     private IEnumerator SolveAnimation()
@@ -368,7 +377,12 @@ public class TortureScript : ModuleScript
                     part++;
                     part %= structure.Length;
                     for (int i = 0; i < GridSize; i++)
-                        _grid[i].SetTileColour(i, structure[part][i] == '1' ? (!IsLogging ? 2 : 4) : (IsLogging ? ((((i % Width) ^ (i / Width)) & 1) == 1 ? 3 : 0) : 0)); // _grid[i].SetSolvedColour(i, structure[part][i] == '1');
+                        _grid[i].SetTileColour(i, structure[part][i] == '1' ? (!IsLogging ? 2 : 4) : (IsLogging ? (IsChecker(i) ? 3 : 0) : 0));
+                    while (_solveTimings.Any(x => elapsed - x < 0.0175f && elapsed - x > 0f))
+                    {
+                        yield return null;
+                        elapsed += Time.deltaTime;
+                    }
                 }
             }
         }
@@ -389,7 +403,7 @@ public class TortureScript : ModuleScript
             yield return new WaitForSeconds(.25f);
         }
 
-        _grid.ForEach(x => Destroy(x.gameObject));
+        _grid.ForEach(x => x.SetTileColour(x.GetIndex(), 1));
 
         //if (_gridSize >= 64)
         //{

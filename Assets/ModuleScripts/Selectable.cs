@@ -63,7 +63,7 @@ public class Selectable : MonoBehaviour
     public void SetColour(int index, bool changed, bool logging)
     {
         if (!changed)
-            Parent._grid[index].ButtonText.color = (((index % Parent.Width) ^ (index / Parent.Width)) & 1) == 1 ? new Color32(0, 0, 0, 255) : (logging ? new Color32(192, 0, 0, 255) : new Color32(0, 192, 255, 255));
+            Parent._grid[index].ButtonText.color = Parent.IsChecker(index) ? new Color32(0, 0, 0, 255) : (logging ? new Color32(192, 0, 0, 255) : new Color32(0, 192, 255, 255));
         else
             Parent._grid[index].ButtonText.color = new Color32(255, 255, 255, 255);
     }
@@ -73,7 +73,7 @@ public class Selectable : MonoBehaviour
         ButtonText.color = new Color(0, 0, 0);
         Parent._grid[index].ButtonMesh.material = Parent._colours[colour];
         if (colour == 3)
-            Enumerable.Range(0, Parent._grid.Length).Where(x => (((x % Parent.Width) ^ (x / Parent.Width)) & 1) == 0).ForEach(x => Parent._grid[x].ButtonText.color = new Color32(192, 0, 0, 255));
+            Enumerable.Range(0, Parent._grid.Length).Where(x => !Parent.IsChecker(x)).ForEach(x => Parent._grid[x].ButtonText.color = new Color32(192, 0, 0, 255));
     }
 
     public void SetText(string x)
@@ -94,7 +94,7 @@ public class Selectable : MonoBehaviour
             return;
 
         int check = Parent._grid.GroupBy(i => i.GetValue()).OrderByDescending(i => i.Count()).First().ToArray()[0].GetValue();
-        if (Parent._grid.All(x => x.GetValue() == check))
+        if (Parent._grid.All(x => x.GetValue() == check) && !Parent.IsLogging)
             Parent.SolveModule();
     }
 
